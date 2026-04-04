@@ -1,3 +1,14 @@
+---
+title: Data Cleaning OpenEnv Environment
+emoji: 🧹
+colorFrom: blue
+colorTo: green
+sdk: docker
+sdk_version: 3.11
+app_file: app.py
+pinned: false
+---
+
 # Data Cleaning OpenEnv Environment
 
 A production-ready reinforcement learning environment for training agents to clean structured data. Compliant with OpenEnv specification with typed models, graders, and multi-task support.
