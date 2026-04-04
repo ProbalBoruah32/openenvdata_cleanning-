@@ -20,7 +20,7 @@ class Settings:
     
     # Server Configuration
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8000"))
+    PORT: int = int(os.getenv("PORT", "7860"))
     
     # Data Configuration
     DATA_PATH: str = os.getenv("DATA_PATH", "./data")
