@@ -94,10 +94,10 @@ celerybeat.pid
 # Environments
 .env
 .venv
-env/
 venv/
 ENV/
 env.bak/
+# env/  # Commented out - this contains our environment code
 venv.bak/
 
 # Spyder project settings
