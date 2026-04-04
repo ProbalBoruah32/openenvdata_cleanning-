@@ -28,5 +28,5 @@ EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/reset || exit 1
 
-# Run the application on HF Spaces port
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+# Run the simple test application
+CMD ["uvicorn", "app_simple:app", "--host", "0.0.0.0", "--port", "7860"]
