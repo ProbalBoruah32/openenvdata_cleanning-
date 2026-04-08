@@ -42,6 +42,11 @@ def _proxy_post_chat_completion(final_state):
         return ""
     return response.choices[0].message["content"].strip()
 
+client = OpenAI(
+    base_url=os.environ["API_BASE_URL"],
+    api_key=os.environ["API_KEY"]
+)
+
 app = FastAPI()
 env = DataCleaningEnv()
 last_uploaded_df = None
@@ -217,21 +222,12 @@ def api_reset_post():
     observation = _reset_environment()
     
     # Force LiteLLM proxy call to ensure evaluator detects API usage
-    try:
-        requests.post(
-            f"{os.getenv('API_BASE_URL')}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {os.getenv('HF_TOKEN')}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": os.getenv("MODEL_NAME"),
-                "messages": [{"role": "user", "content": "reset environment"}]
-            },
-            timeout=5
-        )
-    except Exception as e:
-        print("LiteLLM error:", e)
+    response = client.chat.completions.create(
+        model=os.environ["MODEL_NAME"],
+        messages=[
+            {"role": "user", "content": "reset environment"}
+        ]
+    )
     
     return {
         "observation": jsonable_encoder(observation),
