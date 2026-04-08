@@ -236,3 +236,13 @@ async def clean_file(file: UploadFile = File(...)):
         "logs": logs,
         "final_state": local_env.state()
     })
+
+
+def main():
+    """Main entry point for running the server."""
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")
+
+
+if __name__ == "__main__":
+    main()
