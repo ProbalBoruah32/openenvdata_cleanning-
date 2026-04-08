@@ -1,8 +1,8 @@
 import os
-import requests
 from typing import Any
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from openai import OpenAI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse
 from pathlib import Path
@@ -127,33 +127,33 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
     return round(min(score, 1.0), 2)
 
 
-def _proxy_post_chat_completion(final_state: Any) -> str:
-    api_base_url = os.environ.get("API_BASE_URL")
-    api_key = os.environ.get("API_KEY")
+def _get_openai_client():
+    api_base_url = os.environ["API_BASE_URL"]
+    api_key = os.environ["API_KEY"]
     model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
 
     if not api_base_url or not api_key:
         raise RuntimeError("API_BASE_URL and API_KEY must be set for proxy requests")
 
-    url = api_base_url.rstrip("/") + "/v1/chat/completions"
-    payload = {
-        "model": model_name,
-        "messages": [
+    return OpenAI(api_key=api_key, base_url=api_base_url), model_name
+
+
+def _proxy_post_chat_completion(final_state: Any) -> str:
+    client, model_name = _get_openai_client()
+    prompt = (
+        "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
+        f"Final state: {final_state}"
+    )
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
             {"role": "system", "content": "You are a helpful data cleaning assistant."},
-            {"role": "user", "content": (
-                "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
-                f"Final state: {final_state}"
-            )}
-        ]
-    }
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    response = requests.post(url, json=payload, headers=headers, timeout=30)
-    response.raise_for_status()
-    data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+            {"role": "user", "content": prompt},
+        ],
+    )
+    if not response.choices:
+        return ""
+    return response.choices[0].message["content"].strip()
 
 
 @app.get("/run-inference")
