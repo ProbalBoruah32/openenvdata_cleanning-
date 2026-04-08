@@ -59,14 +59,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Note: OpenAI client would be used for agent-based learning
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-
 class DataCleaningInference:
     """Inference runner for Data Cleaning Environment"""
     
@@ -168,7 +160,7 @@ def main():
         
         if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
             try:
-                llm_output = llm_summary(final_state)
+                llm_output = _proxy_post_chat_completion(final_state)
                 print("[LLM PROXY OUTPUT]")
                 print(llm_output)
             except Exception as exc:
