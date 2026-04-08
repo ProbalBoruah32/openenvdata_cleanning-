@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse
 from pathlib import Path
@@ -160,17 +160,30 @@ def api_run_inference():
 
 def _reset_environment():
     obs = env.reset()
-    return jsonable_encoder(obs)
+    return obs
 
 
 @app.get("/reset")
 def api_reset_get():
-    return _reset_environment()
+    observation = _reset_environment()
+    return jsonable_encoder({
+        "observation": observation,
+        "done": False
+    })
 
 
 @app.post("/reset")
-def api_reset_post(request: Request):
-    return _reset_environment()
+def api_reset_post():
+    observation = _reset_environment()
+    return jsonable_encoder({
+        "observation": observation,
+        "done": False
+    })
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/step")
