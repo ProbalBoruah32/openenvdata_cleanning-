@@ -160,17 +160,25 @@ def api_run_inference():
 
 def _reset_environment():
     obs = env.reset()
-    return jsonable_encoder(obs)
+    return obs
 
 
 @app.get("/reset")
 def api_reset_get():
-    return _reset_environment()
+    observation = _reset_environment()
+    return {
+        "observation": jsonable_encoder(observation),
+        "done": False
+    }
 
 
 @app.post("/reset")
-def api_reset_post(request: Request):
-    return _reset_environment()
+def api_reset_post():
+    observation = _reset_environment()
+    return {
+        "observation": jsonable_encoder(observation),
+        "done": False
+    }
 
 
 @app.post("/step")

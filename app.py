@@ -166,19 +166,19 @@ def _reset_environment():
 @app.get("/reset")
 def api_reset_get():
     observation = _reset_environment()
-    return jsonable_encoder({
-        "observation": observation,
+    return {
+        "observation": jsonable_encoder(observation),
         "done": False
-    })
+    }
 
 
 @app.post("/reset")
 def api_reset_post():
     observation = _reset_environment()
-    return jsonable_encoder({
-        "observation": observation,
+    return {
+        "observation": jsonable_encoder(observation),
         "done": False
-    })
+    }
 
 
 @app.get("/health")
