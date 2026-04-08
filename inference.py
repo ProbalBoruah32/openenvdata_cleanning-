@@ -16,6 +16,11 @@ from typing import Dict, Any, List
 from pathlib import Path
 from openai import OpenAI
 
+client = OpenAI(
+    base_url=os.environ["API_BASE_URL"],
+    api_key=os.environ["API_KEY"]
+)
+
 # Import environment components
 from env.environment import DataCleaningEnv
 from env.models import Action
@@ -23,19 +28,8 @@ from env.graders import grade_hard
 from env.tasks import get_tasks
 
 
-def _get_openai_client():
-    api_base_url = os.environ["API_BASE_URL"]
-    api_key = os.environ["API_KEY"]
-    model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
-
-    if not api_base_url or not api_key:
-        raise RuntimeError("API_BASE_URL and API_KEY must be set for proxy requests")
-
-    return OpenAI(api_key=api_key, base_url=api_base_url), model_name
-
-
 def _proxy_post_chat_completion(final_state):
-    client, model_name = _get_openai_client()
+    model_name = os.environ["MODEL_NAME"]
     prompt = (
         "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
         f"Final state: {final_state}"
