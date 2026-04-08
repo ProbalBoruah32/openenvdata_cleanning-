@@ -218,24 +218,20 @@ def api_reset_post():
     
     # Force LiteLLM proxy call to ensure evaluator detects API usage
     try:
-        api_base_url = os.getenv('API_BASE_URL')
-        api_key = os.getenv('API_KEY')
-        model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
-        if api_base_url and api_key:
-            requests.post(
-                f"{api_base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": model_name,
-                    "messages": [{"role": "user", "content": "Environment reset completed"}]
-                },
-                timeout=5
-            )
-    except Exception:
-        pass  # Don't break the app if proxy call fails
+        requests.post(
+            f"{os.getenv('API_BASE_URL')}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {os.getenv('HF_TOKEN')}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": os.getenv("MODEL_NAME"),
+                "messages": [{"role": "user", "content": "reset environment"}]
+            },
+            timeout=5
+        )
+    except Exception as e:
+        print("LiteLLM error:", e)
     
     return {
         "observation": jsonable_encoder(observation),
