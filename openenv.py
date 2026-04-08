@@ -14,6 +14,8 @@ import os
 import shutil
 import subprocess
 import sys
+import yaml
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -86,6 +88,107 @@ def push_repo(repo_id: str):
     return 0
 
 
+def validate_environment():
+    """Validate the OpenEnv environment setup."""
+    print("Validating OpenEnv environment...")
+    errors = []
+    warnings = []
+    
+    # Check 1: openenv.yaml exists and is valid
+    yaml_file = ROOT / "openenv.yaml"
+    if not yaml_file.exists():
+        errors.append("openenv.yaml not found")
+    else:
+        try:
+            with open(yaml_file, 'r') as f:
+                spec = yaml.safe_load(f)
+            print("  [OK] openenv.yaml exists and is valid YAML")
+            
+            # Check if it has required fields
+            if 'spec' not in spec:
+                errors.append("openenv.yaml missing 'spec' section")
+            else:
+                if 'api_endpoints' not in spec['spec']:
+                    warnings.append("openenv.yaml missing 'api_endpoints' section (optional)")
+                    
+        except yaml.YAMLError as e:
+            errors.append(f"openenv.yaml is invalid YAML: {e}")
+    
+    # Check 2: Required files exist
+    required_files = {
+        "app.py": "FastAPI application",
+        "Dockerfile": "Docker container configuration",
+        "inference.py": "Inference script",
+        "requirements.txt": "Python dependencies",
+    }
+    
+    for filename, description in required_files.items():
+        filepath = ROOT / filename
+        if filepath.exists():
+            print(f"  [OK] {filename} exists ({description})")
+        else:
+            errors.append(f"{filename} not found ({description})")
+    
+    # Check 3: Try to import app.py to verify it's valid Python
+    try:
+        import sys
+        sys.path.insert(0, str(ROOT))
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("app", str(ROOT / "app.py"))
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            print("  [OK] app.py can be imported (no syntax errors)")
+        else:
+            errors.append("app.py could not be loaded")
+    except Exception as e:
+        warnings.append(f"Could not fully validate app.py: {e}")
+    
+    # Check 4: Verify app has reset endpoint
+    app_file = ROOT / "app.py"
+    if app_file.exists():
+        with open(app_file, 'r') as f:
+            app_content = f.read()
+        
+        if '@app.post("/reset")' in app_content:
+            print("  [OK] POST /reset endpoint found")
+        elif '@app.get("/reset")' in app_content:
+            warnings.append("Only GET /reset found, POST /reset recommended")
+        else:
+            errors.append("/reset endpoint not found in app.py")
+    
+    # Check 5: Verify inference.py is valid Python
+    inf_file = ROOT / "inference.py"
+    if inf_file.exists():
+        try:
+            with open(inf_file, 'r') as f:
+                compile(f.read(), str(inf_file), 'exec')
+            print("  [OK] inference.py is valid Python")
+        except SyntaxError as e:
+            errors.append(f"inference.py has syntax error: {e}")
+    
+    # Summary
+    print("\n" + "="*60)
+    if errors:
+        print("VALIDATION FAILED")
+        print("="*60)
+        print("\nErrors:")
+        for error in errors:
+            print(f"  - {error}")
+        if warnings:
+            print("\nWarnings:")
+            for warning in warnings:
+                print(f"  - {warning}")
+        return 1
+    else:
+        print("VALIDATION PASSED")
+        print("="*60)
+        if warnings:
+            print("\nWarnings:")
+            for warning in warnings:
+                print(f"  - {warning}")
+        return 0
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Local OpenEnv wrapper for this repo")
     subparsers = parser.add_subparsers(dest="command")
@@ -98,6 +201,8 @@ def parse_args():
 
     push_parser = subparsers.add_parser("push", help="Prepare a deploy push")
     push_parser.add_argument("--repo-id", required=True, help="Repository ID for deployment (user/repo)")
+    
+    validate_parser = subparsers.add_parser("validate", help="Validate the OpenEnv environment")
 
     return parser.parse_args()
 
@@ -111,6 +216,8 @@ def main():
             return run_server()
     elif args.command == "push":
         return push_repo(args.repo_id)
+    elif args.command == "validate":
+        return validate_environment()
     else:
         print("No command provided. Use --help for usage information.")
         return 1
