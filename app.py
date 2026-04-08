@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse
 from pathlib import Path
@@ -169,7 +169,7 @@ def api_reset_get():
 
 
 @app.post("/reset")
-def api_reset_post(payload: dict = Body(default=None)):
+def api_reset_post(request: Request):
     return _reset_environment()
 
 
