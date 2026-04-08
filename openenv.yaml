@@ -43,7 +43,7 @@ spec:
   # API Endpoints (for validation)
   api_endpoints:
     - path: "/reset"
-      method: "GET"
+      method: "POST"
       description: "Reset the environment and return initial observation"
       response_type: "Observation"
     

@@ -159,6 +159,7 @@ def api_run_inference():
 
 
 @app.get("/reset")
+@app.post("/reset")
 def api_reset():
     obs = env.reset()
     return jsonable_encoder(obs)
