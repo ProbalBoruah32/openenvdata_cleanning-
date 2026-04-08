@@ -9,6 +9,7 @@ This script demonstrates the complete data cleaning pipeline with:
 """
 
 import json
+import os
 import sys
 import logging
 from typing import Dict, Any, List
@@ -19,6 +20,42 @@ from env.environment import DataCleaningEnv
 from env.models import Action
 from env.graders import grade_hard
 from env.tasks import get_tasks
+
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
+
+def get_openai_client():
+    if not OPENAI_AVAILABLE:
+        raise RuntimeError("OpenAI SDK is not installed")
+
+    api_base_url = os.environ["API_BASE_URL"]
+    api_key = os.environ["API_KEY"]
+    model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+
+    return OpenAI(api_key=api_key, base_url=api_base_url), model_name
+
+
+def llm_summary(final_state):
+    client, model_name = get_openai_client()
+    prompt = (
+        "You are a data cleaning assistant. Summarize whether the uploaded data was cleaned correctly "
+        "by following fill_missing, normalize, and remove_duplicates. Return a short summary."
+        f"\n\nFinal state: {final_state}"
+    )
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant for data cleaning."},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    if not response.choices:
+        return ""
+    return response.choices[0].message["content"].strip()
 
 # Setup logging
 logging.basicConfig(
@@ -135,13 +172,14 @@ def main():
         print("[END]")
         print(f"score: {score}")
         
-        logger.info(f"✅ Baseline inference completed. Final Score: {score}")
-        
-        return 0
-    
-    except KeyboardInterrupt:
-        logger.info("Inference interrupted by user")
-        return 1
+        if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
+            try:
+                llm_output = llm_summary(final_state)
+                print("[LLM PROXY OUTPUT]")
+                print(llm_output)
+            except Exception as exc:
+                logger.warning("LLM proxy request failed: %s", exc)
+
     
     except Exception as e:
         logger.error(f"Inference failed: {e}", exc_info=True)
