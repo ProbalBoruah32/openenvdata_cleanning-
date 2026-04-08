@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "server.app:main"
+server = "inference:main"
 
 [project.optional-dependencies]
 dev = [
