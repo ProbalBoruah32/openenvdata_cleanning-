@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Cleaning Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f6fb;
+      color: #111;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.08);
+      padding: 24px;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+    label, button {
+      display: block;
+      margin-top: 16px;
+    }
+    button {
+      border: none;
+      background: #2d6cdf;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #1f55c4;
+    }
+    .message {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #eef3ff;
+      color: #0f2a67;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #eef2ff;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Data Cleaning CSV Upload</h1>
+    <p>Upload a CSV file and see the cleaned dataset returned by the environment.</p>
+
+    <label for="fileInput">Choose CSV or Excel file</label>
+    <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
+
+    <button id="uploadBtn">Upload and Clean</button>
+
+    <div id="status" class="message" style="display:none;"></div>
+    <button id="inferBtn">Run Inference</button>
+    <div id="scoreContainer" class="message" style="display:none;"></div>
+    <div id="logContainer" style="white-space: pre-wrap; margin-top: 20px; background: #f7fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; display: none;"></div>
+    <div id="resultTableContainer"></div>
+    <div id="tableContainer"></div>
+  </div>
+
+  <script>
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const statusBox = document.getElementById('status');
+    const tableContainer = document.getElementById('tableContainer');
+    const scoreContainer = document.getElementById('scoreContainer');
+    const inferBtn = document.getElementById('inferBtn');
+    const logContainer = document.getElementById('logContainer');
+    const resultTableContainer = document.getElementById('resultTableContainer');
+
+    function showMessage(text, isError = false) {
+      statusBox.style.display = 'block';
+      statusBox.textContent = text;
+      statusBox.style.background = isError ? '#fee2e2' : '#eef3ff';
+      statusBox.style.color = isError ? '#991b1b' : '#0f2a67';
+    }
+
+    function renderTable(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        tableContainer.innerHTML = '<p>No data returned.</p>';
+        return;
+      }
+
+      const keys = Object.keys(data[0]);
+      const header = keys.map(key => `<th>${key}</th>`).join('');
+      const rows = data.map(row => {
+        return '<tr>' + keys.map(key => `<td>${row[key] === null ? '' : row[key]}</td>`).join('') + '</tr>';
+      }).join('');
+
+      tableContainer.innerHTML = `
+        <table>
+          <thead><tr>${header}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        showMessage('Please choose a CSV or Excel file first.', true);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      showMessage('Uploading file and cleaning data...');
+      tableContainer.innerHTML = '';
+
+      try {
+        const response = await fetch('/clean-file', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Upload failed');
+        }
+
+        const payload = await response.json();
+        showMessage(payload.message || 'File cleaned successfully.');
+        const data = payload.observation?.data || [];
+        renderTable(data);
+        scoreContainer.style.display = 'none';
+        resultTableContainer.innerHTML = '';
+
+        if (Array.isArray(payload.logs)) {
+          logContainer.style.display = 'block';
+          logContainer.textContent = payload.logs
+            .map(log => `[STEP]\naction: ${log.action}\nreward: ${log.reward}`)
+            .join('\n\n');
+        }
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
+
+    inferBtn.addEventListener('click', async () => {
+      showMessage('Running inference...');
+      logContainer.style.display = 'none';
+      try {
+        const response = await fetch('/run-inference');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Inference failed');
+        }
+        const payload = await response.json();
+        logContainer.style.display = 'block';
+        logContainer.textContent = payload.output || 'No output returned.';
+        if (payload.score !== undefined) {
+          scoreContainer.style.display = 'block';
+          scoreContainer.textContent = `Final Score: ${payload.score}`;
+        }
+        if (Array.isArray(payload.final_state)) {
+          resultTableContainer.innerHTML = '<h3>Final cleaned state</h3>';
+          renderTable(payload.final_state);
+        }
+        showMessage('Inference completed.');
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

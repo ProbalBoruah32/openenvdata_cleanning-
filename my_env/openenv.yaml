@@ -1,0 +1,142 @@
+name: data-cleaning-env
+version: 1.0.0
+title: "Data Cleaning Environment"
+description: "A reinforcement learning environment for training agents to clean structured data through actions like fill_missing, normalize, and remove_duplicates."
+
+metadata:
+  author: "Hackathon Team"
+  license: "MIT"
+  maintainer: "your-email@example.com"
+  repository: "https://github.com/yourusername/data-cleaning-env"
+
+# Environment Specification
+spec:
+  # Action Space Definition
+  action_space:
+    type: "Discrete"
+    n_actions: 3
+    actions:
+      - name: "fill_missing"
+        description: "Fill missing values in numeric columns with mean, and object columns with forward/backward fill"
+      - name: "normalize"
+        description: "Normalize string columns by stripping whitespace and converting to lowercase"
+      - name: "remove_duplicates"
+        description: "Remove duplicate rows based on the 'name' column, keeping the first occurrence"
+
+  # Observation Space Definition
+  observation_space:
+    type: "Dict"
+    fields:
+      data:
+        type: "List[Dict]"
+        description: "List of records/rows with cleaned column values"
+      step_count:
+        type: "Int"
+        description: "Current step count in the episode"
+
+  # Reward Space Definition
+  reward_space:
+    type: "Float"
+    range: [0.0, 0.4]
+    description: "Reward for each action: fill_missing=0.3, normalize=0.3, remove_duplicates=0.4"
+
+  # API Endpoints (for validation)
+  api_endpoints:
+    - path: "/reset"
+      method: "POST"
+      description: "Reset the environment and return initial observation"
+      response_type: "Observation"
+    
+    - path: "/step"
+      method: "POST"
+      description: "Execute one step with the given action"
+      request_type: "Action"
+      response_type: "StepResult"
+    
+    - path: "/state"
+      method: "GET"
+      description: "Get current environment state"
+      response_type: "State"
+    
+    - path: "/tasks"
+      method: "GET"
+      description: "Get all available tasks with difficulty levels and scores"
+      response_type: "TasksSummary"
+    
+    - path: "/clean-file"
+      method: "POST"
+      description: "Upload and clean a CSV/Excel file"
+      request_type: "File"
+      response_type: "CleaningResult"
+
+# Tasks Configuration
+tasks:
+  - id: "easy_data_cleaning"
+    name: "Easy Data Cleaning"
+    difficulty: "easy"
+    description: "Fill missing values in a simple 2-row dataset"
+    actions: ["fill_missing"]
+    expected_score_range: [0.6, 0.8]
+
+  - id: "medium_data_cleaning"
+    name: "Medium Data Cleaning (Normalize)"
+    difficulty: "medium"
+    description: "Normalize string columns with mixed case and spacing"
+    actions: ["normalize"]
+    expected_score_range: [0.5, 0.8]
+
+  - id: "medium_missing_cleaning"
+    name: "Medium Data Cleaning (Fill Missing)"
+    difficulty: "medium"
+    description: "Fill missing values in a 3-row dataset"
+    actions: ["fill_missing"]
+    expected_score_range: [0.6, 0.8]
+
+  - id: "hard_data_cleaning"
+    name: "Hard Data Cleaning"
+    difficulty: "hard"
+    description: "Complete data cleaning pipeline: fill, normalize, deduplicate"
+    actions: ["fill_missing", "normalize", "remove_duplicates"]
+    expected_score_range: [0.9, 1.0]
+
+  - id: "hard_complex_cleaning"
+    name: "Hard Complex Data Cleaning"
+    difficulty: "hard"
+    description: "Complex data cleaning with 8 rows of messy data"
+    actions: ["fill_missing", "normalize", "remove_duplicates"]
+    expected_score_range: [0.9, 1.0]
+
+# Grading Configuration
+grading:
+  type: "custom"
+  scorer: "grade_hard"
+  criteria:
+    - name: "no_missing_values"
+      weight: 0.33
+      description: "All null/None values are filled"
+    
+    - name: "normalized_columns"
+      weight: 0.33
+      description: "String columns are lowercase and trimmed"
+    
+    - name: "no_duplicates"
+      weight: 0.34
+      description: "No duplicate names in the dataset"
+
+# Constraints
+constraints:
+  max_steps: 5
+  timeout_seconds: 60
+  min_vcpu: 2
+  min_memory_gb: 8
+
+# Environment Requirements
+requirements:
+  python: ">=3.8"
+  packages:
+    - "pandas>=1.3.0"
+    - "fastapi>=0.95.0"
+    - "uvicorn>=0.20.0"
+    - "python-multipart>=0.0.5"
+    - "openpyxl>=3.0.0"
+    - "xlrd>=2.0.0"

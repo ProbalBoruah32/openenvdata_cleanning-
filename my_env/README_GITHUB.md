@@ -115,18 +115,6 @@ bob,30,55000.0
 - **Intelligent Graders** - Three-factor evaluation (missing, text, duplicates)
 - **Production Pipeline** - Docker + FastAPI for deployment
 
-## 🧰 OpenEnv Local Wrapper
-
-If you do not have an external OpenEnv CLI installed, use the built-in helper script:
-
-```bash
-python openenv.py init my_env
-python openenv.py run server
-python openenv.py push --repo-id prob12/data_cleanningopenenv
-```
-
-This script creates a local scaffold under `my_env`, starts the FastAPI server, and prints deployment instructions for your repository.
-
 ## 🎬 Demo
 
 ### Live Interactive Demo

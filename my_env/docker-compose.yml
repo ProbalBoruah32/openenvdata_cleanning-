@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - API_BASE_URL=http://localhost:8000
+      - MODEL_NAME=gpt-3.5-turbo
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - ENVIRONMENT=development
+      - DEBUG=false
+    volumes:
+      - .:/app
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/reset"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
