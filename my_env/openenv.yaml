@@ -123,7 +123,6 @@ tasks:
 # Grading Configuration
 grading:
   type: "custom"
-  scorer: "grade_hard"
   criteria:
     - name: "no_missing_values"
       weight: 0.33
@@ -136,6 +135,16 @@ grading:
     - name: "no_duplicates"
       weight: 0.34
       description: "No duplicate names in the dataset"
+
+# Task Grader Mappings (each task has a dedicated grader function)
+task_graders:
+  "easy_data_cleaning": "grade_easy"
+  "medium_data_cleaning": "grade_medium_normalize"
+  "medium_missing_cleaning": "grade_medium_missing"
+  "hard_data_cleaning": "grade_hard"
+  "hard_complex_cleaning": "grade_hard_complex"
+  "easy_normalize_cleaning": "grade_easy_normalize"
+  "medium_duplicates_cleaning": "grade_medium_duplicates"
 
 # Constraints
 constraints:

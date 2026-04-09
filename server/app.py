@@ -36,7 +36,7 @@ def _proxy_post_chat_completion(final_state):
         "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
         f"Final state: {final_state}"
     )
-    response = client.chat.completions.create(
+    response = client_obj.chat.completions.create(
         model=model_name,
         messages=[
             {"role": "system", "content": "You are a helpful assistant for data cleaning."},
