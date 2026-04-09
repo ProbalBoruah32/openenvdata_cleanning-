@@ -139,13 +139,13 @@ grading:
 
 # Task Grader Mappings (each task has a dedicated grader function)
 task_graders:
-  "easy_data_cleaning": "grade_easy"
-  "medium_data_cleaning": "grade_medium_normalize"
-  "medium_missing_cleaning": "grade_medium_missing"
-  "hard_data_cleaning": "grade_hard"
-  "hard_complex_cleaning": "grade_hard_complex"
-  "easy_normalize_cleaning": "grade_easy_normalize"
-  "medium_duplicates_cleaning": "grade_medium_duplicates"
+  "easy": "grade_easy"
+  "medium_normalize": "grade_medium_normalize"
+  "medium_missing": "grade_medium_missing"
+  "hard": "grade_hard"
+  "hard_complex": "grade_hard_complex"
+  "easy_normalize": "grade_easy_normalize"
+  "medium_duplicates": "grade_medium_duplicates"
 
 # Constraints
 constraints:
