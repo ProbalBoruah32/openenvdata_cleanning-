@@ -11,7 +11,7 @@ import requests
 
 from env.environment import DataCleaningEnv
 from env.models import Action
-from env.graders import grade_hard
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
 from env.tasks import get_tasks
 
 def _get_openai_client():
@@ -48,6 +48,16 @@ client = OpenAI(
 )
 
 app = FastAPI()
+
+grader_map = {
+    "easy": grade_easy,
+    "medium_normalize": grade_medium_normalize,
+    "medium_missing": grade_medium_missing,
+    "hard": grade_hard,
+    "easy_normalize": grade_easy_normalize,
+    "medium_duplicates": grade_medium_duplicates,
+    "hard_complex": grade_hard_complex,
+}
 env = DataCleaningEnv()
 last_uploaded_df = None
 
@@ -96,7 +106,8 @@ def api_run_all_tasks():
                 break
         
         final_state = env_task.state()
-        score = grade_hard(final_state)
+        grader = grader_map.get(task_config['name'], grade_hard)
+        score = grader(final_state)
         difficulty = task_config["difficulty"]
         scores_by_difficulty[difficulty].append(score)
         

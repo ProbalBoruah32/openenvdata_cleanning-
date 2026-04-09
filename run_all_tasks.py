@@ -2,7 +2,7 @@ import json
 from env.environment import DataCleaningEnv
 from env.models import Action
 from env.tasks import get_tasks
-from env.graders import grade_hard
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
 
 
 def run_task(task_config):
@@ -10,6 +10,16 @@ def run_task(task_config):
     env = DataCleaningEnv()
     env.load_dataframe(task_config["data"].copy())
     cleaned_state = None
+    
+    grader_map = {
+        "easy": grade_easy,
+        "medium_normalize": grade_medium_normalize,
+        "medium_missing": grade_medium_missing,
+        "hard": grade_hard,
+        "easy_normalize": grade_easy_normalize,
+        "medium_duplicates": grade_medium_duplicates,
+        "hard_complex": grade_hard_complex,
+    }
     
     logs = []
     print(f"\n{'='*60}")
@@ -31,7 +41,8 @@ def run_task(task_config):
         if done:
             break
 
-    score = grade_hard(cleaned_state)
+    grader = grader_map.get(task_config['name'], grade_hard)
+    score = grader(cleaned_state)
     print("[END]")
     print(f"score: {score}")
     print()

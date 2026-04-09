@@ -68,4 +68,92 @@ def grade_hard(data):
     if len(set(names)) == len(names):
         score += 0.4
 
-    return min(score, 1.0)
+    if score == 0.0:
+        return 0.1
+    elif score == 1.0:
+        return 0.9
+    else:
+        return score
+
+
+def grade_easy(data):
+    score = 0.0
+    # Check if age has no None
+    ages = [row.get("age") for row in data]
+    if all(age is not None for age in ages):
+        score = 0.7
+    else:
+        score = 0.3
+    return score
+
+
+def grade_medium_normalize(data):
+    score = 0.0
+    names = [row.get("name", "") for row in data]
+    normalized = all(name.strip().lower() == name for name in names)
+    if normalized:
+        score = 0.6
+    else:
+        score = 0.2
+    return score
+
+
+def grade_medium_missing(data):
+    score = 0.0
+    no_nulls = all(all(v is not None for v in row.values()) for row in data)
+    if no_nulls:
+        score = 0.8
+    else:
+        score = 0.4
+    return score
+
+
+def grade_easy_normalize(data):
+    score = 0.0
+    names = [row.get("name", "") for row in data]
+    normalized = all(name.strip().lower() == name for name in names)
+    if normalized:
+        score = 0.6
+    else:
+        score = 0.2
+    return score
+
+
+def grade_medium_duplicates(data):
+    score = 0.0
+    names = [row.get("name") for row in data if "name" in row]
+    if len(set(names)) == len(names):
+        score = 0.7
+    else:
+        score = 0.3
+    return score
+
+
+def grade_hard_complex(data):
+    # Similar to grade_hard but for more complex data
+    score = 0.0
+
+    no_nulls = all(
+        all(v is not None for v in row.values())
+        for row in data
+    )
+    if no_nulls:
+        score += 0.3
+
+    normalized = all(
+        row.get("name", "").strip() == row.get("name", "").lower()
+        for row in data if "name" in row
+    )
+    if normalized:
+        score += 0.3
+
+    names = [row.get("name") for row in data if "name" in row]
+    if len(set(names)) == len(names):
+        score += 0.4
+
+    if score == 0.0:
+        return 0.1
+    elif score == 1.0:
+        return 0.9
+    else:
+        return score

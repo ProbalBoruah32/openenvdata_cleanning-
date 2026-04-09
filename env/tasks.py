@@ -64,5 +64,27 @@ def get_tasks() -> List[Dict[str, Any]]:
                 {"name": "Bob", "age": "42", "salary": None},
                 {"name": "bob", "age": None, "salary": None}
             ]),
+        },
+        {
+            "name": "easy_normalize",
+            "task": "easy_normalize_cleaning",
+            "difficulty": "easy",
+            "action_sequence": ["normalize"],
+            "data": pd.DataFrame([
+                {"name": "JOHN", "age": "25", "salary": 50000},
+                {"name": "alice", "age": "30", "salary": 60000}
+            ]),
+        },
+        {
+            "name": "medium_duplicates",
+            "task": "medium_duplicates_cleaning",
+            "difficulty": "medium",
+            "action_sequence": ["remove_duplicates"],
+            "data": pd.DataFrame([
+                {"name": "John", "age": "25", "salary": 50000},
+                {"name": "Alice", "age": "30", "salary": 60000},
+                {"name": "John", "age": "25", "salary": 50000},
+                {"name": "Bob", "age": "28", "salary": 55000}
+            ]),
         }
     ]

@@ -24,7 +24,7 @@ client = OpenAI(
 # Import environment components
 from env.environment import DataCleaningEnv
 from env.models import Action
-from env.graders import grade_hard
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
 from env.tasks import get_tasks
 
 
@@ -59,6 +59,15 @@ class DataCleaningInference:
     def __init__(self):
         self.env = DataCleaningEnv()
         self.results = []
+        self.grader_map = {
+            "easy": grade_easy,
+            "medium_normalize": grade_medium_normalize,
+            "medium_missing": grade_medium_missing,
+            "hard": grade_hard,
+            "easy_normalize": grade_easy_normalize,
+            "medium_duplicates": grade_medium_duplicates,
+            "hard_complex": grade_hard_complex,
+        }
     
     def run_single_task(self, task_config: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -106,7 +115,8 @@ class DataCleaningInference:
                 break
         
         # Calculate final score using grader
-        final_score = grade_hard(cleaned_state)
+        grader = self.grader_map.get(task_config['name'], grade_hard)
+        final_score = grader(cleaned_state)
         
         # Print [END] marker with final score
         print("[END]")
