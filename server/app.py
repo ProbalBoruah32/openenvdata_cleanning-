@@ -246,13 +246,35 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
 
 @app.get("/run-inference")
 def api_run_inference():
-    # Always use medium_duplicates task data for consistent testing with duplicates
-    print("DEBUG /run-inference: Using medium_duplicates task data for testing", flush=True)
-    from env.tasks import get_tasks
-    tasks = get_tasks()
-    dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
-    test_df = dup_task['data'].copy()
-    print(f"DEBUG /run-inference: Using test data with shape {test_df.shape}", flush=True)
+    global last_uploaded_df
+    if last_uploaded_df is None:
+        # If no uploaded file, use the medium_duplicates task data for testing
+        print("DEBUG /run-inference: No uploaded file, using medium_duplicates task data for testing", flush=True)
+        from env.tasks import get_tasks
+        tasks = get_tasks()
+        dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
+        test_df = dup_task['data'].copy()
+    else:
+        # Use uploaded file, but ensure it has duplicates for testing
+        print("DEBUG /run-inference: Using uploaded file, but ensuring duplicates for testing", flush=True)
+        test_df = last_uploaded_df.copy()
+        # Check if it has duplicates
+        if 'name' in test_df.columns:
+            names = test_df['name'].astype(str).str.strip().str.lower()
+            if len(names) == len(set(names)):
+                # No duplicates, add one
+                if len(test_df) > 0:
+                    first_row = test_df.iloc[0].copy()
+                    test_df = pd.concat([test_df, pd.DataFrame([first_row])], ignore_index=True)
+                    print("DEBUG /run-inference: Added duplicate row to uploaded data for testing")
+        else:
+            # No name column, add duplicates by all columns
+            if len(test_df.drop_duplicates()) == len(test_df):
+                # No duplicates, add one
+                if len(test_df) > 0:
+                    first_row = test_df.iloc[0].copy()
+                    test_df = pd.concat([test_df, pd.DataFrame([first_row])], ignore_index=True)
+                    print("DEBUG /run-inference: Added duplicate row to uploaded data for testing")
 
     print(f"DEBUG /run-inference: Processing data with shape {test_df.shape}", flush=True)
     print(f"DEBUG /run-inference: Data types: {test_df.dtypes.to_dict()}", flush=True)
