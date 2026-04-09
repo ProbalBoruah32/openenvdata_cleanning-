@@ -70,9 +70,14 @@ def api_run_all_tasks():
         
         final_state = env_task.state()
         grader = grader_map.get(task_config['name'], grade_hard)
-        score = grader(final_state)
+        raw_score = grader(final_state)
+        # DOUBLE WRAP: ensure score is always between 0.1 and 0.9
+        score = safe_score(float(raw_score))
         difficulty = task_config["difficulty"]
         scores_by_difficulty[difficulty].append(score)
+        
+        # DEBUG: Print what evaluator will see
+        print(f"DEBUG /tasks - TASK: {task_config['task']} SCORE: {score}")
         
         results.append({
             "task": task_config["task"],
@@ -155,7 +160,10 @@ def api_run_inference():
             break
 
     final_state = env_for_run.state()
-    score = safe_score(grade_hard(final_state))
+    raw_score = grade_hard(final_state)
+    # DOUBLE WRAP: ensure score is always between 0.1 and 0.9
+    score = safe_score(float(raw_score))
+    print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}")
     output_lines = ["[START]", "task: uploaded_data_cleaning", ""]
     for log in logs:
         output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", ""])
