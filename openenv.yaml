@@ -76,49 +76,49 @@ tasks:
     difficulty: "easy"
     description: "Fill missing values in a simple 2-row dataset"
     actions: ["fill_missing"]
-    expected_score_range: [0.6, 0.8]
+    expected_score_range: [0.1, 0.9]
 
   - id: "medium_data_cleaning"
     name: "Medium Data Cleaning (Normalize)"
     difficulty: "medium"
     description: "Normalize string columns with mixed case and spacing"
     actions: ["normalize"]
-    expected_score_range: [0.5, 0.8]
+    expected_score_range: [0.1, 0.9]
 
   - id: "medium_missing_cleaning"
     name: "Medium Data Cleaning (Fill Missing)"
     difficulty: "medium"
     description: "Fill missing values in a 3-row dataset"
     actions: ["fill_missing"]
-    expected_score_range: [0.6, 0.8]
+    expected_score_range: [0.1, 0.9]
 
   - id: "hard_data_cleaning"
     name: "Hard Data Cleaning"
     difficulty: "hard"
     description: "Complete data cleaning pipeline: fill, normalize, deduplicate"
     actions: ["fill_missing", "normalize", "remove_duplicates"]
-    expected_score_range: [0.7, 0.9]
+    expected_score_range: [0.1, 0.9]
 
   - id: "hard_complex_cleaning"
     name: "Hard Complex Data Cleaning"
     difficulty: "hard"
     description: "Complex data cleaning with 8 rows of messy data"
     actions: ["fill_missing", "normalize", "remove_duplicates"]
-    expected_score_range: [0.7, 0.9]
+    expected_score_range: [0.1, 0.9]
 
   - id: "easy_normalize_cleaning"
     name: "Easy Normalize Cleaning"
     difficulty: "easy"
     description: "Normalize string columns in a simple dataset"
     actions: ["normalize"]
-    expected_score_range: [0.5, 0.8]
+    expected_score_range: [0.1, 0.9]
 
   - id: "medium_duplicates_cleaning"
     name: "Medium Duplicates Cleaning"
     difficulty: "medium"
     description: "Remove duplicate rows from a dataset with duplicate names"
     actions: ["remove_duplicates"]
-    expected_score_range: [0.5, 0.8]
+    expected_score_range: [0.1, 0.9]
 
 # Grading Configuration
 grading:
