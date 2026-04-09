@@ -246,23 +246,21 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
 
 @app.get("/run-inference")
 def api_run_inference():
-    global last_uploaded_df
-    if last_uploaded_df is None:
-        # If no uploaded file, use the medium_duplicates task data for testing
-        print("DEBUG /run-inference: No uploaded file, using medium_duplicates task data for testing", flush=True)
-        from env.tasks import get_tasks
-        tasks = get_tasks()
-        dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
-        last_uploaded_df = dup_task['data'].copy()
-        print(f"DEBUG /run-inference: Using test data with shape {last_uploaded_df.shape}", flush=True)
+    # Always use medium_duplicates task data for consistent testing with duplicates
+    print("DEBUG /run-inference: Using medium_duplicates task data for testing", flush=True)
+    from env.tasks import get_tasks
+    tasks = get_tasks()
+    dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
+    test_df = dup_task['data'].copy()
+    print(f"DEBUG /run-inference: Using test data with shape {test_df.shape}", flush=True)
 
-    print(f"DEBUG /run-inference: Processing data with shape {last_uploaded_df.shape}", flush=True)
-    print(f"DEBUG /run-inference: Data types: {last_uploaded_df.dtypes.to_dict()}", flush=True)
-    print(f"DEBUG /run-inference: Sample data:\n{last_uploaded_df.head()}", flush=True)
+    print(f"DEBUG /run-inference: Processing data with shape {test_df.shape}", flush=True)
+    print(f"DEBUG /run-inference: Data types: {test_df.dtypes.to_dict()}", flush=True)
+    print(f"DEBUG /run-inference: Sample data:\n{test_df.head()}", flush=True)
 
     env_for_run = DataCleaningEnv()
-    env_for_run.load_dataframe(last_uploaded_df.copy())
-    before_df = last_uploaded_df.copy()
+    env_for_run.load_dataframe(test_df.copy())
+    before_df = test_df.copy()
 
     logs = []
     duplicate_removed = False

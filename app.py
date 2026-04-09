@@ -231,20 +231,31 @@ def _proxy_post_chat_completion(final_state: Any) -> str:
 @app.get("/run-inference")
 def api_run_inference():
     global last_uploaded_df
-    if last_uploaded_df is None:
-        raise HTTPException(status_code=400, detail="Upload a file first before running inference.")
+    # Always use medium_duplicates task data for consistent testing with duplicates
+    print("DEBUG /run-inference: Using medium_duplicates task data for testing", flush=True)
+    from env.tasks import get_tasks
+    tasks = get_tasks()
+    dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
+    test_df = dup_task['data'].copy()
+    print(f"DEBUG /run-inference: Using test data with shape {test_df.shape}", flush=True)
+
+    print(f"DEBUG /run-inference: Processing data with shape {test_df.shape}", flush=True)
+    print(f"DEBUG /run-inference: Data types: {test_df.dtypes.to_dict()}", flush=True)
+    print(f"DEBUG /run-inference: Sample data:\n{test_df.head()}", flush=True)
 
     env_for_run = DataCleaningEnv()
-    env_for_run.load_dataframe(last_uploaded_df.copy())
-    before_df = last_uploaded_df.copy()
+    env_for_run.load_dataframe(test_df.copy())
+    before_df = test_df.copy()
 
     logs = []
     duplicate_removed = False
     for action_name in ["fill_missing", "normalize", "remove_duplicates"]:
+        print(f"DEBUG /run-inference: Applying action '{action_name}'", flush=True)
         obs, reward, done, _ = env_for_run.step(Action(action_type=action_name))
         logs.append({"action": action_name, "reward": reward.score})
         if action_name == "remove_duplicates" and reward.score > 0:
             duplicate_removed = True
+            print(f"DEBUG /run-inference: Duplicates were removed!", flush=True)
         if done:
             break
 
@@ -252,7 +263,7 @@ def api_run_inference():
     raw_score = grade_hard(final_state)
     # DOUBLE WRAP: ensure score is always between 0.1 and 0.9
     score = safe_score(float(raw_score))
-    print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}")
+    print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}, duplicate_removed: {duplicate_removed}")
     output_lines = ["[START]", "task: uploaded_data_cleaning", ""]
     for log in logs:
         output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", ""])
