@@ -250,6 +250,10 @@ def api_run_inference():
     if last_uploaded_df is None:
         raise HTTPException(status_code=400, detail="Upload a file first before running inference.")
 
+    print(f"DEBUG /run-inference: Processing uploaded data with shape {last_uploaded_df.shape}", flush=True)
+    print(f"DEBUG /run-inference: Data types: {last_uploaded_df.dtypes.to_dict()}", flush=True)
+    print(f"DEBUG /run-inference: Sample data:\n{last_uploaded_df.head()}", flush=True)
+
     env_for_run = DataCleaningEnv()
     env_for_run.load_dataframe(last_uploaded_df.copy())
     before_df = last_uploaded_df.copy()
@@ -257,10 +261,12 @@ def api_run_inference():
     logs = []
     duplicate_removed = False
     for action_name in ["fill_missing", "normalize", "remove_duplicates"]:
+        print(f"DEBUG /run-inference: Applying action '{action_name}'", flush=True)
         obs, reward, done, _ = env_for_run.step(Action(action_type=action_name))
         logs.append({"action": action_name, "reward": reward.score})
         if action_name == "remove_duplicates" and reward.score > 0:
             duplicate_removed = True
+            print(f"DEBUG /run-inference: Duplicates were removed!", flush=True)
         if done:
             break
 
@@ -268,7 +274,7 @@ def api_run_inference():
     raw_score = grade_hard(final_state)
     # DOUBLE WRAP: ensure score is always between 0.1 and 0.9
     score = safe_score(float(raw_score))
-    print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}")
+    print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}, duplicate_removed: {duplicate_removed}")
     output_lines = ["[START]", "task: uploaded_data_cleaning", ""]
     for log in logs:
         output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", ""])
@@ -359,6 +365,8 @@ async def clean_file(file: UploadFile = File(...)):
     filename = file.filename.lower()
     content = await file.read()
 
+    print(f"DEBUG /clean-file: Processing file '{file.filename}'", flush=True)
+
     if filename.endswith(".csv"):
         df = pd.read_csv(BytesIO(content))
     elif filename.endswith((".xls", ".xlsx")):
@@ -368,6 +376,20 @@ async def clean_file(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail=f"Excel read failed: {exc}")
     else:
         raise HTTPException(status_code=400, detail="Only CSV, XLS and XLSX files are accepted.")
+
+    print(f"DEBUG /clean-file: Loaded dataframe with shape {df.shape}", flush=True)
+    print(f"DEBUG /clean-file: Data types: {df.dtypes.to_dict()}", flush=True)
+    print(f"DEBUG /clean-file: Sample data:\n{df.head()}", flush=True)
+
+    # Check for duplicates in uploaded data
+    if 'name' in df.columns:
+        names = df['name'].astype(str).str.strip().str.lower()
+        unique_names = names.drop_duplicates()
+        print(f"DEBUG /clean-file: Names column found, {len(names)} total, {len(unique_names)} unique", flush=True)
+        if len(names) > len(unique_names):
+            print(f"DEBUG /clean-file: DUPLICATES DETECTED in uploaded data!", flush=True)
+        else:
+            print(f"DEBUG /clean-file: No duplicates found in uploaded data", flush=True)
 
     global last_uploaded_df
     last_uploaded_df = df.copy()
