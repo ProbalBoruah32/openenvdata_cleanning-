@@ -248,9 +248,15 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
 def api_run_inference():
     global last_uploaded_df
     if last_uploaded_df is None:
-        raise HTTPException(status_code=400, detail="Upload a file first before running inference.")
+        # If no uploaded file, use the medium_duplicates task data for testing
+        print("DEBUG /run-inference: No uploaded file, using medium_duplicates task data for testing", flush=True)
+        from env.tasks import get_tasks
+        tasks = get_tasks()
+        dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
+        last_uploaded_df = dup_task['data'].copy()
+        print(f"DEBUG /run-inference: Using test data with shape {last_uploaded_df.shape}", flush=True)
 
-    print(f"DEBUG /run-inference: Processing uploaded data with shape {last_uploaded_df.shape}", flush=True)
+    print(f"DEBUG /run-inference: Processing data with shape {last_uploaded_df.shape}", flush=True)
     print(f"DEBUG /run-inference: Data types: {last_uploaded_df.dtypes.to_dict()}", flush=True)
     print(f"DEBUG /run-inference: Sample data:\n{last_uploaded_df.head()}", flush=True)
 
