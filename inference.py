@@ -16,19 +16,32 @@ from typing import Dict, Any, List
 from pathlib import Path
 from openai import OpenAI
 
-client = OpenAI(
-    base_url=os.environ["API_BASE_URL"],
-    api_key=os.environ["API_KEY"]
-)
+# Initialize OpenAI client with error handling
+client = None
+try:
+    api_base_url = os.environ.get("API_BASE_URL")
+    api_key = os.environ.get("API_KEY")
+    if api_base_url and api_key:
+        client = OpenAI(
+            base_url=api_base_url,
+            api_key=api_key
+        )
+    else:
+        print("WARNING: API_BASE_URL and/or API_KEY not set. OpenAI features will be disabled.", file=sys.stderr)
+except Exception as e:
+    print(f"WARNING: Failed to initialize OpenAI client: {e}. OpenAI features will be disabled.", file=sys.stderr)
+    client = None
 
 # Import environment components
 from env.environment import DataCleaningEnv
 from env.models import Action
-from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex, safe_score
 from env.tasks import get_tasks
 
 
 def _proxy_post_chat_completion(final_state):
+    if client is None:
+        return "OpenAI client not available - cannot generate summary."
     model_name = os.environ["MODEL_NAME"]
     prompt = (
         "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
