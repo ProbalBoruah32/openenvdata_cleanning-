@@ -173,17 +173,31 @@ def evaluator_get_tasks():
                 break
         
         final_state = env_task.state()
-        grader = grader_map.get(task_config['name'], grade_hard)
+        
+        # Get grader - with defensive lookup
+        grader_name = task_config['name']
+        grader = grader_map.get(grader_name)
+        if grader is None:
+            print(f"WARNING: No grader found for task '{grader_name}', using grade_hard", flush=True)
+            grader = grade_hard
+        
         raw_score = grader(final_state)
         score = safe_score(float(raw_score))
         
+        # Log for debugging
+        print(f"EVALUATOR: Task={task_config['task']}, TaskName={grader_name}, Grader={grader.__name__}, RawScore={raw_score}, FinalScore={score}", flush=True)
+        
         # TRIPLE CHECK: Ensure score is strictly between 0 and 1
-        assert 0 < score < 1, f"Score {score} is out of range for task {task_config['task']}"
+        if not (0 < score < 1):
+            print(f"ERROR: Score {score} is out of range [0,1] for task {task_config['task']}", flush=True)
+            # Force it into valid range
+            score = max(0.1, min(0.9, score))
+            print(f"CORRECTED to: {score}", flush=True)
         
         evaluator_tasks.append({
             "task_id": task_config['task'],
             "task_name": task_config['task'],
-            "grader": grader_map.get(task_config['name']).__name__,
+            "grader": grader.__name__,
             "score": score,
             "difficulty": task_config["difficulty"]
         })

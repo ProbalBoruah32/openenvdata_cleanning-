@@ -69,8 +69,8 @@ def grade_hard(data):
         score += 0.3
 
     # Check duplicates (no duplicate names)
-    names = [row.get("name") for row in data if "name" in row]
-    if len(set(names)) == len(names):
+    names = [row.get("name") for row in data if "name" in row and row.get("name") is not None]
+    if names and len(set(names)) == len(names):
         score += 0.4
 
     return safe_score(score)
@@ -120,12 +120,26 @@ def grade_easy_normalize(data):
 
 
 def grade_medium_duplicates(data):
+    """
+    Grade based on whether duplicates are removed.
+    Safe version that handles edge cases.
+    """
+    if not data:
+        return safe_score(0.3)
+    
     score = 0.0
-    names = [row.get("name") for row in data if "name" in row]
+    names = [row.get("name") for row in data if "name" in row and row.get("name") is not None]
+    
+    if not names:
+        # No names to check, default to partial credit
+        return safe_score(0.3)
+    
+    # Check if all names are unique
     if len(set(names)) == len(names):
-        score = 0.7
+        score = 0.7  # All unique, duplicates successfully removed
     else:
-        score = 0.3
+        score = 0.3  # Still has duplicates
+    
     return safe_score(score)
 
 
@@ -147,8 +161,8 @@ def grade_hard_complex(data):
     if normalized:
         score += 0.3
 
-    names = [row.get("name") for row in data if "name" in row]
-    if len(set(names)) == len(names):
+    names = [row.get("name") for row in data if "name" in row and row.get("name") is not None]
+    if names and len(set(names)) == len(names):
         score += 0.4
 
     return safe_score(score)
