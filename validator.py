@@ -223,7 +223,7 @@ class Validator:
             sample_data = [{"name": "john", "age": "25", "salary": 50000}]
             score = grade_hard(sample_data)
             self.check("grade_hard() executable", True)
-            self.check("Score in valid range", 0.0 <= score <= 1.0, f"Score: {score}")
+            self.check("Score in valid range", 0.0 < score < 1.0, f"Score: {score} (must be strictly between 0 and 1)")
             
             return True
         

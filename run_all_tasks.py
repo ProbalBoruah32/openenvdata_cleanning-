@@ -42,7 +42,9 @@ def run_task(task_config):
             break
 
     grader = grader_map.get(task_config['name'], grade_hard)
-    score = grader(cleaned_state)
+    raw_score = grader(cleaned_state)
+    # FORCE SAFE SCORE
+    score = safe_score(float(raw_score))
     print("[END]")
     print(f"score: {score}")
     print()

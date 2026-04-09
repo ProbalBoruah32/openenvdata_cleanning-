@@ -116,7 +116,9 @@ class DataCleaningInference:
         
         # Calculate final score using grader
         grader = self.grader_map.get(task_config['name'], grade_hard)
-        final_score = grader(cleaned_state)
+        raw_score = grader(cleaned_state)
+        # FORCE SAFE SCORE
+        final_score = safe_score(float(raw_score))
         
         # Print [END] marker with final score
         print("[END]")
@@ -157,7 +159,9 @@ def main():
         
         # Get final score
         final_state = env.state()
-        score = grade_hard(final_state)
+        raw_score = grade_hard(final_state)
+        # FORCE SAFE SCORE
+        score = safe_score(float(raw_score))
         
         print("[END]")
         print(f"score: {score}")
