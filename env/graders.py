@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 def safe_score(score: float) -> float:
     """Ensure score is strictly between 0 and 1, never 0.0 or 1.0"""
-    return max(0.1, min(0.9, score))
+    return max(0.01, min(0.99, score))
 
 
 def normalize_value(value: Any) -> Any:

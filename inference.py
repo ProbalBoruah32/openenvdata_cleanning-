@@ -153,40 +153,17 @@ def main():
     
     try:
         # Initialize inference runner
-        env = DataCleaningEnv()
-        env.reset()
+        runner = DataCleaningInference()
         
-        # Execute default pipeline
-        print("[START]")
-        print("task: uploaded_data_cleaning")
-        print()
+        # Get all tasks
+        tasks = get_tasks()
         
-        for action in ["fill_missing", "normalize", "remove_duplicates"]:
-            print("[STEP]")
-            print(f"action: {action}")
-            obs, reward, done, _ = env.step(Action(action_type=action))
-            print(f"reward: {reward.score}")
-            print()
-            if done:
-                break
+        # Run each task
+        for task_config in tasks:
+            result = runner.run_single_task(task_config)
+            runner.results.append(result)
         
-        # Get final score
-        final_state = env.state()
-        raw_score = grade_hard(final_state)
-        # FORCE SAFE SCORE
-        score = safe_score(float(raw_score))
-        
-        print("[END]")
-        print(f"score: {score}")
-        
-        if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
-            try:
-                llm_output = _proxy_post_chat_completion(final_state)
-                print("[LLM PROXY OUTPUT]")
-                print(llm_output)
-            except Exception as exc:
-                logger.warning("LLM proxy request failed: %s", exc)
-
+        logger.info(f"Completed inference for {len(runner.results)} tasks")
     
     except Exception as e:
         logger.error(f"Inference failed: {e}", exc_info=True)
