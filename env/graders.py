@@ -1,6 +1,11 @@
 from typing import List, Dict, Any
 
 
+def safe_score(score: float) -> float:
+    """Ensure score is strictly between 0 and 1, never 0.0 or 1.0"""
+    return max(0.1, min(0.9, score))
+
+
 def normalize_value(value: Any) -> Any:
     if value is None:
         return None
@@ -68,12 +73,7 @@ def grade_hard(data):
     if len(set(names)) == len(names):
         score += 0.4
 
-    if score == 0.0:
-        return 0.1
-    elif score == 1.0:
-        return 0.9
-    else:
-        return score
+    return safe_score(score)
 
 
 def grade_easy(data):
@@ -84,7 +84,7 @@ def grade_easy(data):
         score = 0.7
     else:
         score = 0.3
-    return score
+    return safe_score(score)
 
 
 def grade_medium_normalize(data):
@@ -95,7 +95,7 @@ def grade_medium_normalize(data):
         score = 0.6
     else:
         score = 0.2
-    return score
+    return safe_score(score)
 
 
 def grade_medium_missing(data):
@@ -105,7 +105,7 @@ def grade_medium_missing(data):
         score = 0.8
     else:
         score = 0.4
-    return score
+    return safe_score(score)
 
 
 def grade_easy_normalize(data):
@@ -116,7 +116,7 @@ def grade_easy_normalize(data):
         score = 0.6
     else:
         score = 0.2
-    return score
+    return safe_score(score)
 
 
 def grade_medium_duplicates(data):
@@ -126,7 +126,7 @@ def grade_medium_duplicates(data):
         score = 0.7
     else:
         score = 0.3
-    return score
+    return safe_score(score)
 
 
 def grade_hard_complex(data):
@@ -151,9 +151,4 @@ def grade_hard_complex(data):
     if len(set(names)) == len(names):
         score += 0.4
 
-    if score == 0.0:
-        return 0.1
-    elif score == 1.0:
-        return 0.9
-    else:
-        return score
+    return safe_score(score)

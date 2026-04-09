@@ -7,7 +7,7 @@ import pandas as pd
 
 from env.environment import DataCleaningEnv
 from env.models import Action
-from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex, safe_score
 from env.tasks import get_tasks
 
 app = FastAPI()
@@ -155,7 +155,7 @@ def api_run_inference():
             break
 
     final_state = env_for_run.state()
-    score = grade_hard(final_state)
+    score = safe_score(grade_hard(final_state))
     output_lines = ["[START]", "task: uploaded_data_cleaning", ""]
     for log in logs:
         output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", ""])
