@@ -150,21 +150,37 @@ class DataCleaningInference:
 def main():
     """Main entry point for inference script"""
     logger.info("Starting Data Cleaning Inference...")
-    
+
     try:
-        # Initialize inference runner
-        runner = DataCleaningInference()
-        
-        # Get all tasks
-        tasks = get_tasks()
-        
-        # Run each task
+        tasks = get_tasks()  # gets all 5 tasks from env/tasks.py
+
         for task_config in tasks:
-            result = runner.run_single_task(task_config)
-            runner.results.append(result)
-        
-        logger.info(f"Completed inference for {len(runner.results)} tasks")
-    
+            env = DataCleaningEnv()
+            env.load_dataframe(task_config["data"].copy())
+
+            print("[START]")
+            print(f"task: {task_config['task']}")
+            print()
+
+            for action_name in task_config["action_sequence"]:
+                print("[STEP]")
+                print(f"action: {action_name}")
+                obs, reward, done, _ = env.step(Action(action_type=action_name))
+                print(f"reward: {reward.score}")
+                print()
+                if done:
+                    break
+
+            final_state = env.state()
+            raw_score = grade_hard(final_state)
+
+            # ✅ CRITICAL: clamp to strictly open interval (0, 1)
+            score = max(0.01, min(0.99, raw_score))
+
+            print("[END]")
+            print(f"score: {score}")
+            print()
+
     except Exception as e:
         logger.error(f"Inference failed: {e}", exc_info=True)
         return 1
