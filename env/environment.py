@@ -45,14 +45,24 @@ class DataCleaningEnv:
 
         elif action.action_type == "remove_duplicates":
             before = len(self.data)
+            print(f"DEBUG remove_duplicates: before={before}, data=\n{self.data}", flush=True)
+
             # Remove duplicates based on 'name' column if it exists, otherwise all columns
             if 'name' in self.data.columns:
+                print(f"DEBUG: Removing duplicates by 'name' column", flush=True)
                 self.data = self.data.drop_duplicates(subset=['name'], keep='first')
             else:
+                print(f"DEBUG: Removing duplicates by all columns", flush=True)
                 self.data = self.data.drop_duplicates()
+
             after = len(self.data)
+            print(f"DEBUG remove_duplicates: after={after}, reward_condition={after < before}", flush=True)
+
             if after < before:
                 reward += 0.4
+                print(f"DEBUG: Added 0.4 reward for removing {before - after} duplicates", flush=True)
+            else:
+                print(f"DEBUG: No duplicates found, reward remains 0", flush=True)
 
         done = self.step_count >= self.max_steps
 

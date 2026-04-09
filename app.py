@@ -122,8 +122,12 @@ def evaluator_get_tasks():
         env_task = DataCleaningEnv()
         env_task.load_dataframe(task_config["data"].copy())
         
+        print(f"EVALUATOR START: Task={task_config['task']}, Actions={task_config['action_sequence']}", flush=True)
+        
         for action_name in task_config["action_sequence"]:
+            print(f"EVALUATOR ACTION: {action_name}", flush=True)
             obs, reward, done, _ = env_task.step(Action(action_type=action_name))
+            print(f"EVALUATOR REWARD: {reward.score} for {action_name}", flush=True)
             if done:
                 break
         
