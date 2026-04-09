@@ -123,6 +123,7 @@ tasks:
 # Grading Configuration
 grading:
   type: "custom"
+  num_tasks_with_graders: 7
   criteria:
     - name: "no_missing_values"
       weight: 0.33

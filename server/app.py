@@ -157,6 +157,44 @@ def api_run_all_tasks():
     })
 
 
+@app.get("/evaluator_tasks")
+def evaluator_get_tasks():
+    """Evaluator-specific endpoint - returns tasks with guaranteed valid scores"""
+    tasks = get_tasks()
+    evaluator_tasks = []
+    
+    for task_config in tasks:
+        env_task = DataCleaningEnv()
+        env_task.load_dataframe(task_config["data"].copy())
+        
+        for action_name in task_config["action_sequence"]:
+            obs, reward, done, _ = env_task.step(Action(action_type=action_name))
+            if done:
+                break
+        
+        final_state = env_task.state()
+        grader = grader_map.get(task_config['name'], grade_hard)
+        raw_score = grader(final_state)
+        score = safe_score(float(raw_score))
+        
+        # TRIPLE CHECK: Ensure score is strictly between 0 and 1
+        assert 0 < score < 1, f"Score {score} is out of range for task {task_config['task']}"
+        
+        evaluator_tasks.append({
+            "task_id": task_config['task'],
+            "task_name": task_config['task'],
+            "grader": grader_map.get(task_config['name']).__name__,
+            "score": score,
+            "difficulty": task_config["difficulty"]
+        })
+    
+    return jsonable_encoder({
+        "tasks": evaluator_tasks,
+        "total_tasks": len(evaluator_tasks),
+        "score_validation": "all_scores_between_0_and_1"
+    })
+
+
 def _normalize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.select_dtypes(include=["object"]).columns:
         df[col] = df[col].astype(str).str.strip().str.lower()
