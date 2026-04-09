@@ -26,7 +26,12 @@ def _get_openai_client():
 
 
 def _proxy_post_chat_completion(final_state):
-    client, model_name = _get_openai_client()
+    if client is None:
+        return "OpenAI client not available - cannot generate summary."
+    try:
+        client_obj, model_name = _get_openai_client()
+    except Exception as e:
+        return f"Failed to get OpenAI client: {e}"
     prompt = (
         "Summarize whether the uploaded data was cleaned correctly by following fill_missing, normalize, and remove_duplicates. "
         f"Final state: {final_state}"
@@ -42,10 +47,17 @@ def _proxy_post_chat_completion(final_state):
         return ""
     return response.choices[0].message["content"].strip()
 
-client = OpenAI(
-    base_url=os.environ["API_BASE_URL"],
-    api_key=os.environ["API_KEY"]
-)
+try:
+    api_base_url = os.environ.get("API_BASE_URL")
+    api_key = os.environ.get("API_KEY")
+    if api_base_url and api_key:
+        client = OpenAI(base_url=api_base_url, api_key=api_key)
+    else:
+        print("WARNING: API_BASE_URL and/or API_KEY not set. OpenAI features will be disabled.", file=__import__('sys').stderr)
+        client = None
+except Exception as e:
+    print(f"WARNING: Failed to initialize OpenAI client: {e}. OpenAI features will be disabled.", file=__import__('sys').stderr)
+    client = None
 
 app = FastAPI()
 

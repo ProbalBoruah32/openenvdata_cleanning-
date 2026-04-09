@@ -97,14 +97,28 @@ tasks:
     difficulty: "hard"
     description: "Complete data cleaning pipeline: fill, normalize, deduplicate"
     actions: ["fill_missing", "normalize", "remove_duplicates"]
-    expected_score_range: [0.9, 1.0]
+    expected_score_range: [0.7, 0.9]
 
   - id: "hard_complex_cleaning"
     name: "Hard Complex Data Cleaning"
     difficulty: "hard"
     description: "Complex data cleaning with 8 rows of messy data"
     actions: ["fill_missing", "normalize", "remove_duplicates"]
-    expected_score_range: [0.9, 1.0]
+    expected_score_range: [0.7, 0.9]
+
+  - id: "easy_normalize_cleaning"
+    name: "Easy Normalize Cleaning"
+    difficulty: "easy"
+    description: "Normalize string columns in a simple dataset"
+    actions: ["normalize"]
+    expected_score_range: [0.5, 0.8]
+
+  - id: "medium_duplicates_cleaning"
+    name: "Medium Duplicates Cleaning"
+    difficulty: "medium"
+    description: "Remove duplicate rows from a dataset with duplicate names"
+    actions: ["remove_duplicates"]
+    expected_score_range: [0.5, 0.8]
 
 # Grading Configuration
 grading:
