@@ -2,7 +2,7 @@ import json
 from env.environment import DataCleaningEnv
 from env.models import Action
 from env.tasks import get_tasks
-from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex
+from env.graders import grade_easy, grade_medium_normalize, grade_medium_missing, grade_hard, grade_easy_normalize, grade_medium_duplicates, grade_hard_complex, safe_score
 
 
 def run_task(task_config):
