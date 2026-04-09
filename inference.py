@@ -181,6 +181,14 @@ def main():
             print(f"score: {score}")
             print()
 
+            if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
+                try:
+                    llm_output = _proxy_post_chat_completion(final_state)
+                    print("[LLM PROXY OUTPUT]")
+                    print(llm_output)
+                except Exception as exc:
+                    logger.warning("LLM proxy request failed: %s", exc)
+
     except Exception as e:
         logger.error(f"Inference failed: {e}", exc_info=True)
         return 1
