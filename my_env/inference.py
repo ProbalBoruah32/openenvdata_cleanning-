@@ -17,7 +17,7 @@ from pathlib import Path
 # Import environment components
 from env.environment import DataCleaningEnv
 from env.models import Action
-from env.graders import grade_hard
+from env.graders import grade_hard, safe_score
 from env.tasks import get_tasks
 
 # Setup logging
@@ -89,7 +89,7 @@ class DataCleaningInference:
                 break
         
         # Calculate final score using grader
-        final_score = grade_hard(cleaned_state)
+        final_score = safe_score(float(grade_hard(cleaned_state)))
         
         # Print [END] marker with final score
         print("[END]")
@@ -124,16 +124,20 @@ def main():
             print(f"action: {action}")
             obs, reward, done, _ = env.step(Action(action_type=action))
             print(f"reward: {reward.score}")
+            print("[STEP_OUTPUT]")
+            print(json.dumps(obs.dict(), indent=2))
             print()
             if done:
                 break
         
         # Get final score
         final_state = env.state()
-        score = grade_hard(final_state)
+        score = safe_score(float(grade_hard(final_state)))
         
         print("[END]")
         print(f"score: {score}")
+        print("[FINAL_STATE]")
+        print(json.dumps(final_state, indent=2))
         
         logger.info(f"✅ Baseline inference completed. Final Score: {score}")
         

@@ -138,6 +138,10 @@ class DataCleaningInference:
         print(f"score: {final_score}")
         print()
         
+        print("[FINAL_STATE]")
+        print(json.dumps(cleaned_state, indent=2))
+        print()
+
         return {
             "task": task_config["task"],
             "difficulty": task_config.get("difficulty", "unknown"),
@@ -167,6 +171,8 @@ def main():
                 print(f"action: {action_name}")
                 obs, reward, done, _ = env.step(Action(action_type=action_name))
                 print(f"reward: {reward.score}")
+                print("[STEP_OUTPUT]")
+                print(json.dumps(obs.dict(), indent=2))
                 print()
                 if done:
                     break
@@ -178,6 +184,8 @@ def main():
 
             print("[END]")
             print(f"score: {score}")
+            print("[FINAL_STATE]")
+            print(json.dumps(final_state, indent=2))
             print()
 
             if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
