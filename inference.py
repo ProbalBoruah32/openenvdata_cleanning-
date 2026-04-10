@@ -172,10 +172,9 @@ def main():
                     break
 
             final_state = env.state()
-            raw_score = grade_hard(final_state)
-
-            # ✅ CRITICAL: clamp to strictly open interval (0, 1)
-            score = max(0.01, min(0.99, raw_score))
+            grader = DataCleaningInference().grader_map.get(task_config['name'], grade_hard)
+            raw_score = grader(final_state)
+            score = safe_score(float(raw_score))
 
             print("[END]")
             print(f"score: {score}")

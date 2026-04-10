@@ -241,7 +241,7 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
     if duplicate_removed:
         score += 0.4
 
-    return round(min(score, 1.0), 2)
+    return safe_score(score)
 
 
 @app.get("/run-inference")

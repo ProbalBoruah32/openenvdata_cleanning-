@@ -196,7 +196,7 @@ def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_re
     if duplicate_removed:
         score += 0.4
 
-    return safe_score(round(min(score, 1.0), 2))
+    return safe_score(score)
 
 
 def _get_openai_client():

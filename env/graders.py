@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 def safe_score(score: float) -> float:
     """Ensure score is strictly between 0 and 1, never 0.0 or 1.0"""
-    return max(0.01, min(0.99, score))
+    return max(0.01, min(0.99, round(score, 2)))
 
 
 def normalize_value(value: Any) -> Any:
@@ -46,7 +46,7 @@ def compare_records(actual: List[Dict[str, Any]], expected: List[Dict[str, Any]]
 
 def grade_task(actual: List[Dict[str, Any]], expected: List[Dict[str, Any]]) -> float:
     score = compare_records(actual, expected)
-    return min(max(score, 0.0), 1.0)
+    return safe_score(score)
 
 
 def grade_hard(data):
