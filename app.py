@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -175,26 +176,35 @@ def _normalize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _score_uploaded_file(before: pd.DataFrame, after: pd.DataFrame, duplicate_removed: bool) -> float:
-    score = 0.0
+    score = 0.1
     before_missing = before.isna().sum().sum()
     after_missing = after.isna().sum().sum()
+
     if before_missing > 0:
         if after_missing == 0:
-            score += 0.3
+            score += 0.35
         elif after_missing < before_missing:
-            score += 0.15
+            score += 0.2
 
-    string_columns = [c for c in before.columns if before[c].dtype == object]
-    normalized_improvement = 0
+    before = before.reset_index(drop=True)
+    after = after.reset_index(drop=True)
+    string_columns = [c for c in before.columns if c in after.columns and (before[c].dtype == object or pd.api.types.is_string_dtype(before[c]))]
+    normalized_score = 0.0
+    normalized_total = 0
+    common_length = min(len(before), len(after))
+
     for col in string_columns:
-        before_values = before[col].astype(str).str.strip().str.lower()
-        after_values = after[col].astype(str).str.strip().str.lower()
-        normalized_improvement += int((before_values != after_values).any())
-    if normalized_improvement > 0:
-        score += 0.3
+        before_values = before.loc[:common_length - 1, col].astype(str).str.strip().str.lower()
+        after_values = after.loc[:common_length - 1, col].astype(str).str.strip().str.lower()
+        normalized_total += len(before_values)
+        normalized_score += (before_values != after_values).sum()
+
+    if normalized_total > 0:
+        normalized_ratio = normalized_score / normalized_total
+        score += min(0.35, normalized_ratio * 0.35)
 
     if duplicate_removed:
-        score += 0.4
+        score += 0.3
 
     return safe_score(score)
 
@@ -239,26 +249,9 @@ def api_run_inference():
         dup_task = [t for t in tasks if t['name'] == 'medium_duplicates'][0]
         test_df = dup_task['data'].copy()
     else:
-        # Use uploaded file, but ensure it has duplicates for testing
-        print("DEBUG /run-inference: Using uploaded file, but ensuring duplicates for testing", flush=True)
+        # Use uploaded file as-is and preserve its original structure
+        print("DEBUG /run-inference: Using uploaded file", flush=True)
         test_df = last_uploaded_df.copy()
-        # Check if it has duplicates
-        if 'name' in test_df.columns:
-            names = test_df['name'].astype(str).str.strip().str.lower()
-            if len(names) == len(set(names)):
-                # No duplicates, add one
-                if len(test_df) > 0:
-                    first_row = test_df.iloc[0].copy()
-                    test_df = pd.concat([test_df, pd.DataFrame([first_row])], ignore_index=True)
-                    print("DEBUG /run-inference: Added duplicate row to uploaded data for testing")
-        else:
-            # No name column, add duplicates by all columns
-            if len(test_df.drop_duplicates()) == len(test_df):
-                # No duplicates, add one
-                if len(test_df) > 0:
-                    first_row = test_df.iloc[0].copy()
-                    test_df = pd.concat([test_df, pd.DataFrame([first_row])], ignore_index=True)
-                    print("DEBUG /run-inference: Added duplicate row to uploaded data for testing")
 
     print(f"DEBUG /run-inference: Processing data with shape {test_df.shape}", flush=True)
     print(f"DEBUG /run-inference: Data types: {test_df.dtypes.to_dict()}", flush=True)
@@ -273,7 +266,8 @@ def api_run_inference():
     for action_name in ["fill_missing", "normalize", "remove_duplicates"]:
         print(f"DEBUG /run-inference: Applying action '{action_name}'", flush=True)
         obs, reward, done, _ = env_for_run.step(Action(action_type=action_name))
-        logs.append({"action": action_name, "reward": reward.score})
+        step_output = obs.dict()
+        logs.append({"action": action_name, "reward": reward.score, "output": step_output})
         if action_name == "remove_duplicates" and reward.score > 0:
             duplicate_removed = True
             print(f"DEBUG /run-inference: Duplicates were removed!", flush=True)
@@ -281,14 +275,12 @@ def api_run_inference():
             break
 
     final_state = env_for_run.state()
-    raw_score = grade_hard(final_state)
-    # DOUBLE WRAP: ensure score is always between 0.1 and 0.9
-    score = safe_score(float(raw_score))
+    score = _score_uploaded_file(before_df, pd.DataFrame(final_state), duplicate_removed)
     print(f"DEBUG /run-inference - TASK: uploaded_data_cleaning SCORE: {score}, duplicate_removed: {duplicate_removed}")
     output_lines = ["[START]", "task: uploaded_data_cleaning", ""]
     for log in logs:
-        output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", ""])
-    output_lines.extend(["[END]", f"score: {score}", ""])
+        output_lines.extend(["[STEP]", f"action: {log['action']}", f"reward: {log['reward']}", "[STEP_OUTPUT]", json.dumps(log['output'], indent=2), ""])
+    output_lines.extend(["[END]", f"score: {score}", "[FINAL_STATE]", json.dumps(final_state, indent=2), ""])
 
     llm_output = None
     if os.environ.get("API_BASE_URL") and os.environ.get("API_KEY"):
@@ -378,11 +370,14 @@ async def clean_file(file: UploadFile = File(...)):
         if done:
             break
 
+    cleaned_state = local_env.state()
+
     return jsonable_encoder({
-        "message": "File loaded and cleaned using default pipeline.",
+        "message": "File loaded and cleaned using data-dependent pipeline.",
         "observation": obs,
+        "cleaned_state": cleaned_state,
         "logs": logs,
-        "final_state": local_env.state()
+        "final_state": cleaned_state
     })
 
 
